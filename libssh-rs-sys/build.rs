@@ -25,9 +25,6 @@ fn main() {
     println!("cargo:include={}", include.display());
     println!("cargo:root={}", dst.display());
 
-    let openssl_version = std::env::var("DEP_OPENSSL_VERSION_NUMBER").unwrap();
-    let openssl_version = u64::from_str_radix(&openssl_version, 16).unwrap();
-
     let target = std::env::var("TARGET").unwrap();
     let target_family = std::env::var("CARGO_CFG_TARGET_FAMILY").unwrap();
     cfg.define("GLOBAL_CLIENT_CONFIG", Some("\"/etc/ssh/ssh_config\""));
@@ -37,34 +34,11 @@ fn main() {
     );
     cfg.define("HAVE_GETADDRINFO", Some("1"));
     cfg.define("HAVE_LIBCRYPTO", Some("1"));
-    cfg.define("HAVE_OPENSSL_AES_H", Some("1"));
-    cfg.define("HAVE_OPENSSL_BLOWFISH_H", Some("1"));
-    cfg.define("HAVE_OPENSSL_DES_H", Some("1"));
-    cfg.define("HAVE_OPENSSL_ECC", Some("1"));
-    cfg.define("HAVE_OPENSSL_ECDH_H", Some("1"));
-    cfg.define("HAVE_OPENSSL_ECDSA_H", Some("1"));
+    cfg.define("WITH_MBEDTLS", Some("1"));
     cfg.define("HAVE_ECC", Some("1"));
     cfg.define("HAVE_DSA", Some("1"));
-    cfg.define("HAVE_OPENSSL_EC_H", Some("1"));
 
-    if openssl_version >= 0x1_01_01_00_0 {
-        cfg.define("HAVE_OPENSSL_EVP_CHACHA20", Some("1"));
-    }
-
-    /* Don't bother setting these: libssh has a fallback in any case,
-     * and the documentation doesn't specify when they were introduced,
-    cfg.define("HAVE_OPENSSL_EVP_DIGESTSIGN", Some("1"));
-    cfg.define("HAVE_OPENSSL_EVP_DIGESTVERIFY", Some("1"));
-    */
-
-    if openssl_version < 0x1_01_00_00_0 {
-        cfg.file("vendored/src/libcrypto-compat.c");
-    }
-
-    if false && openssl_version >= 0x3_00_00_00_0 {
-        cfg.define("HAVE_OPENSSL_EVP_KDF_CTX_NEW_ID", Some("1"));
-    }
-    // cfg.define("HAVE_OPENSSL_FIPS_MODE", Some("1"));
+    cfg.file("vendored/src/libcrypto-compat.c");
 
     cfg.define("HAVE_STDINT_H", Some("1"));
     cfg.define("WITH_ZLIB", Some("1"));
@@ -138,23 +112,6 @@ fn main() {
         cfg.include(path);
     }
     if let Some(zlib_root) = std::env::var_os("DEP_Z_ROOT") {
-        println!(
-            "cargo:rustc-link-search=native={}",
-            PathBuf::from(zlib_root).join("lib").to_str().unwrap()
-        );
-    }
-
-    println!("cargo:rerun-if-env-changed=DEP_OPENSSL_INCLUDE");
-    if let Some(path) = std::env::var_os("DEP_OPENSSL_INCLUDE") {
-        if let Some(path) = std::env::split_paths(&path).next() {
-            if let Some(path) = path.to_str() {
-                if !path.is_empty() {
-                    cfg.include(path);
-                }
-            }
-        }
-    }
-    if let Some(zlib_root) = std::env::var_os("DEP_OPENSSL_ROOT") {
         println!(
             "cargo:rustc-link-search=native={}",
             PathBuf::from(zlib_root).join("lib").to_str().unwrap()
