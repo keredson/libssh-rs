@@ -38,8 +38,6 @@ fn main() {
     cfg.define("HAVE_ECC", Some("1"));
     cfg.define("HAVE_DSA", Some("1"));
 
-    cfg.file("vendored/src/libcrypto-compat.c");
-
     cfg.define("HAVE_STDINT_H", Some("1"));
     cfg.define("WITH_ZLIB", Some("1"));
     cfg.define("WITH_GEX", Some("1"));
